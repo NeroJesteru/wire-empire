@@ -275,6 +275,101 @@
     cursor:pointer;
   }
 
+
+
+  /* ---- Challenges ---- */
+  .challenges{ display:flex; flex-direction:column; gap:8px; padding:0 16px; }
+  .chal{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .chal.done{ border-color:var(--danfo); }
+  .chal .icon{
+    font-size:24px; width:44px; height:44px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--surface-2); border-radius:10px; flex-shrink:0;
+  }
+  .chal .info{ flex:1; min-width:0; }
+  .chal .name{ font-weight:700; font-size:13px; line-height:1.3; }
+  .bar{ height:6px; background:var(--surface-2); border-radius:4px; margin-top:8px; overflow:hidden; }
+  .bar .fill{ height:100%; width:0; background:var(--naira); border-radius:4px; transition:width .3s ease; }
+  .chal.done .bar .fill{ background:var(--danfo); }
+  .chal .meta{
+    font-family:'JetBrains Mono', monospace; font-size:11px;
+    color:var(--text-dim); margin-top:4px;
+  }
+  .chal-btns{ display:flex; flex-direction:column; gap:6px; align-items:stretch; flex-shrink:0; }
+  .chal-btns .buy-btn{ background:var(--danfo); color:#111; }
+  .chal-btns .buy-btn:disabled{ background:var(--surface-2); color:var(--text-dim); }
+  .skip-btn{
+    background:none; border:1px solid var(--line); color:var(--text-dim);
+    font-family:'Space Grotesk', sans-serif; font-size:11px;
+    padding:5px 8px; border-radius:8px; cursor:pointer;
+  }
+  .chal-count{
+    padding:8px 16px 0;
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-dim);
+  }
+
+  /* ---- Risky moves ---- */
+  .risk-card{
+    margin:0 16px 10px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+  }
+  .risk-head{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .risk-head .icon{
+    font-size:24px; width:44px; height:44px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--surface-2); border-radius:10px; flex-shrink:0;
+  }
+  .risk-head .name{ font-weight:700; font-size:14px; }
+  .risk-head .meta, .coin .meta{
+    font-family:'JetBrains Mono', monospace; font-size:11px;
+    color:var(--text-dim); margin-top:2px;
+  }
+  .chips{ display:flex; gap:6px; margin-bottom:10px; }
+  .chip{
+    flex:1; background:var(--surface-2); border:1px solid var(--line);
+    color:var(--text-dim); font-family:'JetBrains Mono', monospace;
+    font-weight:700; font-size:11px; padding:7px 4px; border-radius:8px; cursor:pointer;
+  }
+  .chip.active{ background:var(--danfo); border-color:var(--danfo); color:#111; }
+  .bet-opt, .coin{
+    background:var(--surface-2); border-radius:10px; padding:10px; margin-bottom:6px;
+  }
+  .bet-opt{ display:flex; align-items:center; gap:10px; }
+  .bet-opt .info{ flex:1; min-width:0; }
+  .bet-opt .name{ font-weight:700; font-size:13px; }
+  .bet-opt .meta{
+    font-family:'JetBrains Mono', monospace; font-size:11px;
+    color:var(--text-dim); margin-top:2px;
+  }
+  .risk-result{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px;
+    color:var(--text-dim); margin-top:8px; min-height:16px;
+  }
+  .risk-result.good{ color:var(--naira); }
+  .risk-result.bad{ color:var(--rust); }
+  .coin-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .coin .name{ font-weight:700; font-size:13px; }
+  .coin .sym{
+    font-family:'JetBrains Mono', monospace; font-size:10px;
+    color:var(--text-dim); margin-left:4px;
+  }
+  .spark{ width:90px; height:30px; flex-shrink:0; }
+  .coin-actions{ display:flex; gap:8px; margin-top:8px; }
+  .coin-actions .buy-btn{ flex:1; padding:9px 10px; }
+  .up{ color:var(--naira); }
+  .down{ color:var(--rust); }
+
   ::-webkit-scrollbar{width:4px;}
   ::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
 
@@ -314,9 +409,32 @@
   <div class="section-title">Your Hustles</div>
   <div class="hustles" id="hustleList"></div>
 
+  <div class="section-title">Challenges <span style="color:var(--text-dim); font-weight:500; text-transform:none; letter-spacing:0;">— finish tasks, collect cash</span></div>
+  <div class="challenges" id="challengeList"></div>
+  <div class="chal-count" id="chalCount"></div>
+
   <div class="section-title">Lifestyle <span style="color:var(--text-dim); font-weight:500; text-transform:none; letter-spacing:0;">— spend it, flex it, real life no dey save</span></div>
   <div class="tabs" id="lifestyleTabs"></div>
   <div class="lifestyle-items" id="lifestyleList"></div>
+
+  <div class="section-title">Risky moves <span style="color:var(--text-dim); font-weight:500; text-transform:none; letter-spacing:0;">— big gains, big losses</span></div>
+  <div class="risk-card">
+    <div class="risk-head">
+      <div class="icon">⚽</div>
+      <div class="info"><div class="name">Betting slip</div><div class="meta" id="betStats">W 0 · L 0</div></div>
+    </div>
+    <div class="chips" id="betChips"></div>
+    <div id="betOptions"></div>
+    <div class="risk-result" id="betResult">Pick your stake, then pick your odds.</div>
+  </div>
+  <div class="risk-card">
+    <div class="risk-head">
+      <div class="icon">📈</div>
+      <div class="info"><div class="name">Crypto trading</div><div class="meta" id="cryptoStats">Portfolio ₦0</div></div>
+    </div>
+    <div class="chips" id="tradeChips"></div>
+    <div id="coinList"></div>
+  </div>
 
   <div class="log-wrap">
     <div class="log-header">Street Gist</div>
@@ -416,13 +534,36 @@
     'Your name dey circulate for the market.',
   ];
 
-  const OFFLINE_CAP_SECONDS = 4 * 3600;   // max 4 hours of offline earnings
-  const OFFLINE_RATE = 0.5;               // offline earns half rate
+  const COINS = [
+    { id:'btc',   name:'Bitcoin',  sym:'BTC',   base:50000, vol:0.012, rug:false },
+    { id:'sol',   name:'Solana',   sym:'SOL',   base:4000,  vol:0.025, rug:false },
+    { id:'naija', name:'Naija Moon', sym:'NMOON', base:25,   vol:0.05,  rug:true  },
+  ];
+  const BETS = [
+    { id:'safe',    name:'Safe single',   odds:1.5, p:0.58 },
+    { id:'acca',    name:'4-fold acca',   odds:4,   p:0.22 },
+    { id:'jackpot', name:'Mega jackpot',  odds:12,  p:0.07 },
+  ];
+  const STAKE_OPTS = [
+    { pct:0.10, label:'10%' }, { pct:0.25, label:'25%' },
+    { pct:0.50, label:'50%' }, { pct:1,    label:'All-in' },
+  ];
+  const MIN_STAKE = 10;
+
+  const OFFLINE_CAP_SECONDS = 2 * 3600;   // max 2 hours of offline earnings
+  const OFFLINE_RATE = 0.1;               // offline earns only 10% of normal rate
 
   function freshState(){
-    const s = { cash:50, day:1, hustles:{}, lifestyleCount:{}, boostUntil:0, blackoutUntil:0, savedAt:Date.now() };
+    const s = { cash:50, day:1, hustles:{}, lifestyleCount:{}, boostUntil:0, blackoutUntil:0, savedAt:Date.now(),
+                betPct:0.25, tradePct:0.25, betWins:0, betLosses:0,
+                stats:{ earned:0, upgrades:0, tradeWins:0, lifestyle:0 }, challenges:[], challengesDone:0,
+                crypto:{ prices:{}, holdings:{}, cost:{}, hist:{} } };
     HUSTLE_DEFS.forEach(h => s.hustles[h.id] = 0);
     LIFESTYLE_DEFS.forEach(l => s.lifestyleCount[l.id] = 0);
+    COINS.forEach(c => {
+      s.crypto.prices[c.id] = c.base; s.crypto.holdings[c.id] = 0;
+      s.crypto.cost[c.id] = 0; s.crypto.hist[c.id] = [c.base];
+    });
     return s;
   }
   let state = freshState();
@@ -553,6 +694,8 @@
 
   function render(force){
     renderStats();
+    updateChallenges();
+    updateRisky();
     const sig = listSignature();
     if(force || sig !== lastSig){
       lastSig = sig;
@@ -560,6 +703,343 @@
       renderLifestyleList();
     }
   }
+
+  /* ---------- Challenges ---------- */
+  const challengeList = document.getElementById('challengeList');
+  const chalCount = document.getElementById('chalCount');
+  const MAX_CHALLENGES = 3;
+
+  const CHALLENGE_TYPES = {
+    earn: {
+      icon:'💰',
+      value:() => state.stats.earned,
+      eligible:() => true,
+      make:() => { const t = Math.max(300, Math.round(baseIncomeTotal() * 240 / 100) * 100);
+                   return { target:t, reward:Math.round(t * 0.35) }; },
+      text:t => `Earn ${fmt(t)} from your hustles`,
+      money:true
+    },
+    upgrade: {
+      icon:'🛠️',
+      value:() => state.stats.upgrades,
+      eligible:() => true,
+      make:() => ({ target:3 + Math.floor(Math.random() * 3),
+                    reward:Math.max(150, Math.round(baseIncomeTotal() * 100)) }),
+      text:t => `Start or upgrade hustles ${t} times`
+    },
+    income: {
+      icon:'⚡',
+      value:() => baseIncomeTotal(),
+      eligible:() => true,
+      make:() => { const t = Math.max(2, Math.ceil(baseIncomeTotal() * 1.5));
+                   return { target:t, reward:Math.max(300, t * 120) }; },
+      text:t => `Reach ${fmt(t)} per second`,
+      money:true, absolute:true
+    },
+    betwin: {
+      icon:'⚽',
+      value:() => state.betWins,
+      eligible:() => state.cash >= 50,
+      make:() => ({ target:2, reward:Math.max(250, Math.round(baseIncomeTotal() * 140)) }),
+      text:t => `Win ${t} bets`
+    },
+    trade: {
+      icon:'📈',
+      value:() => state.stats.tradeWins,
+      eligible:() => state.cash >= 100 || portfolioValue() > 0,
+      make:() => ({ target:2, reward:Math.max(250, Math.round(baseIncomeTotal() * 140)) }),
+      text:t => `Sell crypto at a profit ${t} times`
+    },
+    lifestyle: {
+      icon:'🛍️',
+      value:() => state.stats.lifestyle,
+      eligible:() => baseIncomeTotal() >= 3,
+      make:() => ({ target:2, reward:Math.max(200, Math.round(baseIncomeTotal() * 80)) }),
+      text:t => `Buy ${t} lifestyle items`
+    },
+  };
+
+  function newChallenge(excludeTypes){
+    const all = Object.keys(CHALLENGE_TYPES);
+    let pool = all.filter(k => !excludeTypes.includes(k) && CHALLENGE_TYPES[k].eligible());
+    if(!pool.length) pool = all.filter(k => !excludeTypes.includes(k));
+    if(!pool.length) pool = ['earn'];
+    const type = pool[Math.floor(Math.random() * pool.length)];
+    const def = CHALLENGE_TYPES[type];
+    const m = def.make();
+    return { type, target:m.target, reward:m.reward, base: def.absolute ? 0 : def.value() };
+  }
+
+  function ensureChallenges(){
+    state.challenges = (state.challenges || []).filter(c => CHALLENGE_TYPES[c.type]);
+    while(state.challenges.length < MAX_CHALLENGES){
+      state.challenges.push(newChallenge(state.challenges.map(c => c.type)));
+    }
+  }
+
+  function challengeProgress(c){
+    const def = CHALLENGE_TYPES[c.type];
+    return Math.max(0, def.value() - c.base);
+  }
+
+  function buildChallenges(){
+    challengeList.innerHTML = state.challenges.map((c, i) => {
+      const def = CHALLENGE_TYPES[c.type];
+      return `
+        <div class="chal" id="chal-${i}">
+          <div class="icon">${def.icon}</div>
+          <div class="info">
+            <div class="name">${def.text(c.target)}</div>
+            <div class="bar"><div class="fill" id="chf-${i}"></div></div>
+            <div class="meta" id="chm-${i}"></div>
+          </div>
+          <div class="chal-btns">
+            <button class="buy-btn" data-act="claim" data-i="${i}" disabled>Claim<br>${fmt(c.reward)}</button>
+            <button class="skip-btn" data-act="skip" data-i="${i}">Skip</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function updateChallenges(){
+    state.challenges.forEach((c, i) => {
+      const def = CHALLENGE_TYPES[c.type];
+      const prog = challengeProgress(c);
+      const pct = Math.min(1, prog / c.target);
+      const fill = document.getElementById('chf-' + i);
+      const meta = document.getElementById('chm-' + i);
+      const card = document.getElementById('chal-' + i);
+      if(!fill || !meta || !card) return;
+      fill.style.width = (pct * 100) + '%';
+      meta.textContent = def.money
+        ? `${fmt(Math.min(prog, c.target))} / ${fmt(c.target)}`
+        : `${Math.min(Math.floor(prog), c.target)} / ${c.target}`;
+      card.classList.toggle('done', pct >= 1);
+      const btn = card.querySelector('[data-act="claim"]');
+      if(btn) btn.disabled = pct < 1;
+    });
+    chalCount.textContent = `Challenges completed: ${state.challengesDone}`;
+  }
+
+  function replaceChallenge(i){
+    const others = state.challenges.filter((_, j) => j !== i).map(c => c.type);
+    state.challenges[i] = newChallenge(others);
+    buildChallenges();
+    updateChallenges();
+  }
+
+  challengeList.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-act]');
+    if(!btn || btn.disabled) return;
+    const i = parseInt(btn.dataset.i, 10);
+    const c = state.challenges[i];
+    if(!c) return;
+    if(btn.dataset.act === 'claim'){
+      if(challengeProgress(c) < c.target) return;
+      state.cash += c.reward;
+      state.challengesDone += 1;
+      haptic('success');
+      addLog(`Challenge done! You collected ${fmt(c.reward)}.`, 'good');
+      replaceChallenge(i);
+      render(true);
+      save();
+    } else {
+      haptic();
+      addLog('Challenge skipped. New one don land.');
+      replaceChallenge(i);
+      save();
+    }
+  });
+
+  /* ---------- Risky moves: betting + crypto ---------- */
+  const betChips = document.getElementById('betChips');
+  const tradeChips = document.getElementById('tradeChips');
+  const betOptions = document.getElementById('betOptions');
+  const betResult = document.getElementById('betResult');
+  const betStats = document.getElementById('betStats');
+  const cryptoStats = document.getElementById('cryptoStats');
+  const coinList = document.getElementById('coinList');
+
+  function fmtPrice(n){ return n < 100 ? '₦' + n.toFixed(2) : fmt(n); }
+
+  function buildChips(el){
+    el.innerHTML = STAKE_OPTS.map(o =>
+      `<button class="chip" data-pct="${o.pct}">${o.label}</button>`).join('');
+  }
+
+  function buildRisky(){
+    buildChips(betChips);
+    buildChips(tradeChips);
+    betOptions.innerHTML = BETS.map(b => `
+      <div class="bet-opt">
+        <div class="info">
+          <div class="name">${b.name}</div>
+          <div class="meta">pays ${b.odds}x · ${Math.round(b.p*100)}% to win</div>
+        </div>
+        <button class="buy-btn" data-id="${b.id}">Bet<br><span id="bs-${b.id}">₦0</span></button>
+      </div>`).join('');
+    coinList.innerHTML = COINS.map(c => `
+      <div class="coin">
+        <div class="coin-top">
+          <div>
+            <div class="name">${c.name}<span class="sym">${c.sym}</span></div>
+            <div class="meta" id="cp-${c.id}"></div>
+            <div class="meta" id="ch-${c.id}"></div>
+          </div>
+          <svg class="spark" viewBox="0 0 100 28" preserveAspectRatio="none"><polyline id="sp-${c.id}" fill="none" stroke-width="1.8" points=""/></svg>
+        </div>
+        <div class="coin-actions">
+          <button class="buy-btn" data-act="buy" data-id="${c.id}">Buy</button>
+          <button class="buy-btn flex-btn" data-act="sell" data-id="${c.id}">Sell all</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function sparkPoints(h){
+    if(h.length < 2) return '0,14 100,14';
+    const mn = Math.min.apply(null, h), mx = Math.max.apply(null, h), rng = (mx - mn) || 1;
+    return h.map((v,i) => (i/(h.length-1))*100 + ',' + (27 - ((v-mn)/rng)*25)).join(' ');
+  }
+
+  function portfolioValue(){
+    return COINS.reduce((sum,c) => sum + state.crypto.holdings[c.id] * state.crypto.prices[c.id], 0);
+  }
+
+  function updateRisky(){
+    // chips
+    betChips.querySelectorAll('.chip').forEach(ch =>
+      ch.classList.toggle('active', parseFloat(ch.dataset.pct) === state.betPct));
+    tradeChips.querySelectorAll('.chip').forEach(ch =>
+      ch.classList.toggle('active', parseFloat(ch.dataset.pct) === state.tradePct));
+
+    // betting
+    const stake = Math.floor(state.cash * state.betPct);
+    betStats.textContent = `W ${state.betWins} · L ${state.betLosses}`;
+    BETS.forEach(b => {
+      const lbl = document.getElementById('bs-' + b.id);
+      if(lbl) lbl.textContent = fmt(stake);
+      const btn = betOptions.querySelector(`button[data-id="${b.id}"]`);
+      if(btn) btn.disabled = stake < MIN_STAKE;
+    });
+
+    // crypto
+    cryptoStats.textContent = 'Portfolio ' + fmt(portfolioValue());
+    COINS.forEach(c => {
+      const price = state.crypto.prices[c.id];
+      const hist = state.crypto.hist[c.id];
+      const chg = ((price - hist[0]) / hist[0]) * 100;
+      const held = state.crypto.holdings[c.id];
+      const val = held * price;
+      const cost = state.crypto.cost[c.id];
+      document.getElementById('cp-' + c.id).innerHTML =
+        `${fmtPrice(price)} · <span class="${chg >= 0 ? 'up' : 'down'}">${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%</span>`;
+      let line = held > 0 ? 'Holding ' + fmt(val) : 'Not holding';
+      if(held > 0 && cost > 0){
+        const pl = val - cost;
+        line += ` (<span class="${pl >= 0 ? 'up' : 'down'}">${pl >= 0 ? '+' : '-'}${fmt(Math.abs(pl))}</span>)`;
+      }
+      document.getElementById('ch-' + c.id).innerHTML = line;
+      const sp = document.getElementById('sp-' + c.id);
+      sp.setAttribute('points', sparkPoints(hist));
+      sp.setAttribute('stroke', chg >= 0 ? '#14b862' : '#d0491c');
+      coinList.querySelector(`button[data-act="buy"][data-id="${c.id}"]`).disabled = state.cash * state.tradePct < MIN_STAKE;
+      coinList.querySelector(`button[data-act="sell"][data-id="${c.id}"]`).disabled = held <= 0;
+    });
+  }
+
+  function setBetResult(text, type){
+    betResult.textContent = text;
+    betResult.className = 'risk-result' + (type ? ' ' + type : '');
+  }
+
+  function placeBet(id){
+    const b = BETS.find(x => x.id === id);
+    const stake = Math.floor(state.cash * state.betPct);
+    if(stake < MIN_STAKE){ haptic('error'); setBetResult('Stake too small. You need at least ' + fmt(MIN_STAKE) + '.', 'bad'); return; }
+    state.cash -= stake;
+    if(Math.random() < b.p){
+      const payout = Math.floor(stake * b.odds);
+      state.cash += payout;
+      state.betWins += 1;
+      haptic('success');
+      const msg = `${b.name} enter! You won ${fmt(payout - stake)}.`;
+      setBetResult(msg, 'good');
+      addLog(b.id === 'jackpot' ? `JACKPOT! ${msg}` : msg, 'good');
+    } else {
+      state.betLosses += 1;
+      haptic('error');
+      const msg = `${b.name} burst. You lost ${fmt(stake)}.`;
+      setBetResult(msg, 'bad');
+      addLog(msg, 'bad');
+    }
+    render(true);
+    save();
+  }
+
+  function tradeCoin(id, act){
+    const c = COINS.find(x => x.id === id);
+    const price = state.crypto.prices[id];
+    if(act === 'buy'){
+      const spend = Math.floor(state.cash * state.tradePct);
+      if(spend < MIN_STAKE){ haptic('error'); return; }
+      state.cash -= spend;
+      state.crypto.holdings[id] += spend / price;
+      state.crypto.cost[id] += spend;
+      haptic('success');
+      addLog(`You bought ${fmt(spend)} of ${c.sym}.`);
+    } else {
+      const held = state.crypto.holdings[id];
+      if(held <= 0){ haptic('error'); return; }
+      const value = held * price;
+      const pl = value - state.crypto.cost[id];
+      if(pl > 0) state.stats.tradeWins += 1;
+      state.cash += value;
+      state.crypto.holdings[id] = 0;
+      state.crypto.cost[id] = 0;
+      haptic(pl >= 0 ? 'success' : 'error');
+      addLog(`Sold ${c.sym} for ${fmt(value)} (${pl >= 0 ? '+' : '-'}${fmt(Math.abs(pl))}).`, pl >= 0 ? 'good' : 'bad');
+    }
+    render(true);
+    save();
+  }
+
+  function marketTick(){
+    COINS.forEach(c => {
+      let p = state.crypto.prices[c.id];
+      p *= 1 + (Math.random() - 0.5) * 2 * c.vol;
+      p += (c.base - p) * 0.003;
+      if(c.rug && Math.random() < 0.012){
+        p *= 0.4; haptic('error');
+        addLog(`${c.sym} don rug pull! Price crash.`, 'bad');
+      } else if(c.rug && Math.random() < 0.012){
+        p *= 1.8;
+        addLog(`${c.sym} dey moon. Influencers dey shout.`, 'good');
+      }
+      p = Math.min(Math.max(p, c.base * 0.05), c.base * 20);
+      state.crypto.prices[c.id] = p;
+      const h = state.crypto.hist[c.id];
+      h.push(p);
+      while(h.length > 30) h.shift();
+    });
+    updateRisky();
+  }
+
+  betChips.addEventListener('click', e => {
+    const ch = e.target.closest('.chip'); if(!ch) return;
+    state.betPct = parseFloat(ch.dataset.pct); haptic(); updateRisky();
+  });
+  tradeChips.addEventListener('click', e => {
+    const ch = e.target.closest('.chip'); if(!ch) return;
+    state.tradePct = parseFloat(ch.dataset.pct); haptic(); updateRisky();
+  });
+  betOptions.addEventListener('click', e => {
+    const btn = e.target.closest('.buy-btn'); if(!btn || btn.disabled) return;
+    placeBet(btn.dataset.id);
+  });
+  coinList.addEventListener('click', e => {
+    const btn = e.target.closest('.buy-btn'); if(!btn || btn.disabled) return;
+    tradeCoin(btn.dataset.id, btn.dataset.act);
+  });
 
   /* ---------- Interaction ---------- */
   lifestyleTabs.addEventListener('click', e => {
@@ -580,6 +1060,7 @@
     if(state.cash < cost){ haptic('error'); return; }
     state.cash -= cost;
     state.lifestyleCount[def.id] += 1;
+    state.stats.lifestyle += 1;
     haptic('success');
     addLog(`You copped another ${def.name.toLowerCase()}. People dey notice.`, 'good');
     render(true);
@@ -595,6 +1076,7 @@
     if(state.cash < cost){ haptic('error'); return; }
     state.cash -= cost;
     state.hustles[def.id] += 1;
+    state.stats.upgrades += 1;
     haptic('success');
     if(level === 0) addLog(`You just started your ${def.name.toLowerCase()} hustle.`, 'good');
     else addLog(`${def.name} upgraded to level ${state.hustles[def.id]}.`);
@@ -606,6 +1088,8 @@
     state = freshState();
     storageClear();
     logBody.innerHTML = '';
+    ensureChallenges();
+    buildChallenges();
     addLog('New hustle started with ₦50 in your pocket.', 'good');
     render(true);
     save();
@@ -621,7 +1105,7 @@
   /* ---------- Save / load ---------- */
   function save(){
     state.savedAt = Date.now();
-    storageSet(JSON.stringify(state));
+    storageSet(JSON.stringify(state, (k, v) => typeof v === 'number' ? Number(v.toPrecision(8)) : v));
   }
 
   function loadSave(done){
@@ -634,6 +1118,17 @@
           // merge in case new hustles/items were added in an update
           HUSTLE_DEFS.forEach(h => { if(typeof state.hustles[h.id] !== 'number') state.hustles[h.id] = 0; });
           LIFESTYLE_DEFS.forEach(l => { if(typeof state.lifestyleCount[l.id] !== 'number') state.lifestyleCount[l.id] = 0; });
+          state.stats = Object.assign({}, base.stats, state.stats || {});
+          if(!Array.isArray(state.challenges)) state.challenges = [];
+          if(typeof state.challengesDone !== 'number') state.challengesDone = 0;
+          if(!state.crypto) state.crypto = base.crypto;
+          ['prices','holdings','cost','hist'].forEach(k => { if(!state.crypto[k]) state.crypto[k] = base.crypto[k]; });
+          COINS.forEach(c => {
+            if(typeof state.crypto.prices[c.id] !== 'number') state.crypto.prices[c.id] = c.base;
+            if(typeof state.crypto.holdings[c.id] !== 'number') state.crypto.holdings[c.id] = 0;
+            if(typeof state.crypto.cost[c.id] !== 'number') state.crypto.cost[c.id] = 0;
+            if(!Array.isArray(state.crypto.hist[c.id]) || !state.crypto.hist[c.id].length) state.crypto.hist[c.id] = [state.crypto.prices[c.id]];
+          });
           // offline earnings
           const elapsed = Math.min((Date.now() - (s.savedAt || Date.now())) / 1000, OFFLINE_CAP_SECONDS);
           const earned = baseIncomeTotal() * elapsed * OFFLINE_RATE;
@@ -685,7 +1180,9 @@
       const now = Date.now();
       const dt = (now - lastTick) / 1000;
       lastTick = now;
-      state.cash += totalIncome() * dt;
+      const gain = totalIncome() * dt;
+      state.cash += gain;
+      state.stats.earned += gain;
       render();
     }, 500);
 
@@ -693,6 +1190,7 @@
     setInterval(() => { state.day += 1; }, 60000);
     setInterval(triggerEvent, 25000);
     setInterval(save, 10000);
+    setInterval(marketTick, 2000);
 
     document.addEventListener('visibilitychange', () => { if(document.hidden) save(); });
     window.addEventListener('pagehide', save);
@@ -701,7 +1199,10 @@
 
   /* ---------- Boot ---------- */
   renderLifestyleTabs();
+  buildRisky();
   loadSave(() => {
+    ensureChallenges();
+    buildChallenges();
     updateTicker();
     render(true);
     startLoops();
