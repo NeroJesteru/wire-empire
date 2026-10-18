@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Wire Empire</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0f1410;
+    --surface: #182119;
+    --surface-2: #1f2b21;
+    --line: #2a3a2c;
+    --naira: #14b862;
+    --naira-dim: #0d8447;
+    --danfo: #ffc700;
+    --rust: #d0491c;
+    --text: #f1efe4;
+    --text-dim: #9aa39a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);}
+  body{
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    -webkit-user-select:none; user-select:none;
+    overscroll-behavior:none;
+  }
+  #app{width:100%; max-width:480px; position:relative;}
+
+  .ticker-wrap{
+    background:var(--danfo);
+    color:#111;
+    overflow:hidden;
+    white-space:nowrap;
+    position:relative;
+    border-bottom:3px solid #000;
+  }
+  .ticker{
+    display:inline-block;
+    padding:6px 0;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:0.5px;
+    animation: scroll-left 18s linear infinite;
+  }
+  @keyframes scroll-left{
+    0%{transform:translateX(0%);}
+    100%{transform:translateX(-50%);}
+  }
+
+  header{ padding:18px 16px 10px; }
+  .brand{
+    font-family:'Archivo Black', sans-serif;
+    font-size:28px;
+    line-height:0.95;
+    letter-spacing:-0.5px;
+    color:var(--text);
+  }
+  .brand span{color:var(--naira);}
+  .brand small{
+    display:block;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:500;
+    font-size:11px;
+    letter-spacing:2px;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    margin-top:4px;
+  }
+
+  .stats{ display:flex; gap:8px; padding:12px 16px 4px; }
+  .stat{
+    flex:1;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+    min-width:0;
+  }
+  .stat .label{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--text-dim);
+    margin-bottom:4px;
+  }
+  .stat .value{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:16px;
+    white-space:nowrap;
+  }
+  .stat.cash .value{color:var(--naira);}
+  .stat.income .value{color:var(--danfo);}
+  .stat.flex .value{color:var(--rust);}
+
+  .section-title{
+    padding:18px 16px 8px;
+    font-family:'Archivo Black', sans-serif;
+    font-size:13px;
+    letter-spacing:1px;
+    color:var(--text-dim);
+    text-transform:uppercase;
+  }
+
+  .hustles{ display:flex; flex-direction:column; gap:8px; padding:0 16px; }
+  .hustle{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .hustle.locked{opacity:0.55;}
+  .hustle .icon{
+    font-size:26px;
+    width:44px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--surface-2);
+    border-radius:10px;
+    flex-shrink:0;
+  }
+  .hustle .info{flex:1; min-width:0;}
+  .hustle .name{ font-weight:700; font-size:14px; }
+  .hustle .meta{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+  .hustle .lvl{
+    font-size:10px;
+    background:var(--surface-2);
+    color:var(--naira);
+    border-radius:6px;
+    padding:1px 6px;
+    margin-left:6px;
+  }
+  .buy-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:12px;
+    background:var(--naira-dim);
+    color:#08150e;
+    border:none;
+    border-radius:8px;
+    padding:10px 12px;
+    min-width:78px;
+    text-align:center;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .buy-btn:active{transform:scale(0.95);}
+  .buy-btn:disabled{
+    background:var(--surface-2);
+    color:var(--text-dim);
+    cursor:not-allowed;
+  }
+
+  .log-wrap{
+    margin:18px 16px 0;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .log-header{
+    background:var(--surface-2);
+    padding:8px 12px;
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    font-weight:700;
+    border-bottom:1px solid var(--line);
+  }
+  .log-body{
+    max-height:140px;
+    overflow-y:auto;
+    padding:8px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .log-entry{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--text-dim);
+    line-height:1.4;
+  }
+  .log-entry.event{color:var(--danfo);}
+  .log-entry.bad{color:var(--rust);}
+  .log-entry.good{color:var(--naira);}
+
+  .tabs{ display:flex; gap:6px; padding:0 16px 10px; }
+  .tab-btn{
+    flex:1;
+    background:var(--surface);
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:12px;
+    padding:8px 6px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .tab-btn.active{
+    background:var(--rust);
+    border-color:var(--rust);
+    color:#fff2ea;
+  }
+  .lifestyle-items{ display:flex; flex-direction:column; gap:8px; padding:0 16px; }
+  .litem{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .litem.owned{border-color:var(--rust);}
+  .litem .icon{
+    font-size:24px;
+    width:44px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--surface-2);
+    border-radius:10px;
+    flex-shrink:0;
+  }
+  .litem .info{flex:1; min-width:0;}
+  .litem .name{font-weight:700; font-size:14px;}
+  .litem .lvl{
+    font-size:10px;
+    background:var(--surface-2);
+    color:var(--rust);
+    border-radius:6px;
+    padding:1px 6px;
+    margin-left:6px;
+  }
+  .litem .meta{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+  .buy-btn.flex-btn{ background:var(--rust); color:#fff2ea; }
+  .buy-btn.flex-btn:disabled{ background:var(--surface-2); color:var(--text-dim); }
+
+  .reset-row{ padding:16px; text-align:center; }
+  .reset-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:'Space Grotesk', sans-serif;
+    font-size:11px;
+    padding:8px 14px;
+    border-radius:20px;
+    cursor:pointer;
+  }
+
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .ticker{animation:none;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="ticker-wrap">
+    <div class="ticker" id="tickerText">LOADING ROUTE...</div>
+  </div>
+
+  <header>
+    <div class="brand">WIRE <span>EMPIRE</span>
+      <small>Lagos Hustle Simulator · Day <span id="dayNum">1</span></small>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat cash">
+      <div class="label">Cash</div>
+      <div class="value" id="cashVal">₦0</div>
+    </div>
+    <div class="stat income">
+      <div class="label">Per Sec</div>
+      <div class="value" id="incomeVal">₦0/s</div>
+    </div>
+    <div class="stat flex">
+      <div class="label">Flex</div>
+      <div class="value" id="flexVal">0</div>
+    </div>
+  </div>
+
+  <div class="section-title">Your Hustles</div>
+  <div class="hustles" id="hustleList"></div>
+
+  <div class="section-title">Lifestyle <span style="color:var(--text-dim); font-weight:500; text-transform:none; letter-spacing:0;">— spend it, flex it, real life no dey save</span></div>
+  <div class="tabs" id="lifestyleTabs"></div>
+  <div class="lifestyle-items" id="lifestyleList"></div>
+
+  <div class="log-wrap">
+    <div class="log-header">Street Gist</div>
+    <div class="log-body" id="logBody"></div>
+  </div>
+
+  <div class="reset-row">
+    <button class="reset-btn" id="resetBtn">Start Over</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  /* ---------- Telegram setup ---------- */
+  const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+  if(tg){
+    tg.ready();
+    tg.expand();
+    try{ tg.setHeaderColor('#0f1410'); tg.setBackgroundColor('#0f1410'); }catch(e){}
+    try{ if(tg.disableVerticalSwipes) tg.disableVerticalSwipes(); }catch(e){}
+  }
+  function haptic(kind){
+    if(!tg || !tg.HapticFeedback) return;
+    try{
+      if(kind === 'error') tg.HapticFeedback.notificationOccurred('error');
+      else if(kind === 'success') tg.HapticFeedback.notificationOccurred('success');
+      else tg.HapticFeedback.impactOccurred('light');
+    }catch(e){}
+  }
+
+  /* ---------- Storage: Telegram CloudStorage, fallback localStorage ---------- */
+  const SAVE_KEY = 'wire_empire_save_v1';
+  const hasCloud = tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9');
+
+  function storageGet(cb){
+    if(hasCloud){
+      tg.CloudStorage.getItem(SAVE_KEY, (err, val) => cb(err ? null : val));
+    } else {
+      try{ cb(localStorage.getItem(SAVE_KEY)); }catch(e){ cb(null); }
+    }
+  }
+  function storageSet(str){
+    if(hasCloud){
+      tg.CloudStorage.setItem(SAVE_KEY, str, () => {});
+    }
+    try{ localStorage.setItem(SAVE_KEY, str); }catch(e){}
+  }
+  function storageClear(){
+    if(hasCloud) tg.CloudStorage.removeItem(SAVE_KEY, () => {});
+    try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  }
+
+  /* ---------- Game data ---------- */
+  const HUSTLE_DEFS = [
+    { id:'okada',   icon:'🏍️', name:'Okada Rider',    baseCost:20,     baseIncome:0.6,  costMul:1.14 },
+    { id:'suya',    icon:'🍢', name:'Suya Spot',      baseCost:120,    baseIncome:3.2,  costMul:1.15 },
+    { id:'pos',     icon:'📱', name:'POS Agent Stand', baseCost:650,    baseIncome:14,   costMul:1.16 },
+    { id:'danfo',   icon:'🚌', name:'Danfo Route',    baseCost:3200,   baseIncome:60,   costMul:1.17 },
+    { id:'ankara',  icon:'👗', name:'Ankara Boutique', baseCost:16000,  baseIncome:260,  costMul:1.18 },
+    { id:'content', icon:'🎥', name:'Content House',  baseCost:80000,  baseIncome:1100, costMul:1.19 },
+    { id:'crypto',  icon:'🪂', name:'Crypto Corner',  baseCost:400000, baseIncome:4800, costMul:1.20 },
+    { id:'estate',  icon:'🏢', name:'Estate Empire',  baseCost:2000000,baseIncome:21000,costMul:1.21 },
+  ];
+
+  const EVENTS = [
+    { text:'NEPA don take light — income slows for 8s', type:'bad', effect:'blackout' },
+    { text:'Police checkpoint dey road — lost a small cut', type:'bad', effect:'checkpoint' },
+    { text:'Customer wave don land — bonus cash!', type:'good', effect:'wave' },
+    { text:'Naija spirit dey your side today, double income for 6s', type:'good', effect:'boost' },
+    { text:'Fuel scarcity — okada and danfo slow small', type:'bad', effect:'fuel' },
+  ];
+
+  const LIFESTYLE_DEFS = [
+    { id:'okrika',   cat:'Clothes', icon:'👕', name:'Okrika Fit',         cost:500,      flex:2,    costMul:1.10 },
+    { id:'native',   cat:'Clothes', icon:'🧵', name:'Ankara Native Wear', cost:5000,     flex:8,    costMul:1.11 },
+    { id:'kicks',    cat:'Clothes', icon:'👟', name:'Designer Kicks',     cost:45000,    flex:30,   costMul:1.12 },
+    { id:'agbada',   cat:'Clothes', icon:'🥻', name:'Full Agbada Set',    cost:300000,   flex:120,  costMul:1.13 },
+    { id:'infinix',  cat:'Phones',  icon:'📱', name:'Infinix Hot',        cost:60000,    flex:20,   costMul:1.12 },
+    { id:'itel',     cat:'Phones',  icon:'📲', name:'Techno Camon',       cost:150000,   flex:45,   costMul:1.13 },
+    { id:'iphone',   cat:'Phones',  icon:'📱', name:'Latest iPhone',      cost:1200000,  flex:250,  costMul:1.14 },
+    { id:'foldable', cat:'Phones',  icon:'🪭', name:'Foldable Flagship',  cost:3500000,  flex:600,  costMul:1.15 },
+    { id:'guest',    cat:'Hotels',  icon:'🏨', name:'Local Guest House',  cost:8000,     flex:10,   costMul:1.08 },
+    { id:'weekend',  cat:'Hotels',  icon:'🏩', name:'Weekend at Eko Hotel',cost:150000,  flex:60,   costMul:1.10 },
+    { id:'suite',    cat:'Hotels',  icon:'🛎️', name:'Presidential Suite', cost:900000,   flex:220,  costMul:1.11 },
+    { id:'villa',    cat:'Hotels',  icon:'🏝️', name:'Private Island Villa',cost:10000000,flex:1500, costMul:1.12 },
+  ];
+  const LIFESTYLE_CATS = ['Clothes', 'Phones', 'Hotels'];
+  let activeCat = 'Clothes';
+
+  const GIST = [
+    'Aunty at the shop don ask when you go expand.',
+    'Small rain but the hustle no rest.',
+    'Landlord don pass, rent still safe for now.',
+    'Somebody dey ask for your business card.',
+    'Traffic on the mainland today no be small.',
+    'Your name dey circulate for the market.',
+  ];
+
+  const OFFLINE_CAP_SECONDS = 4 * 3600;   // max 4 hours of offline earnings
+  const OFFLINE_RATE = 0.5;               // offline earns half rate
+
+  function freshState(){
+    const s = { cash:50, day:1, hustles:{}, lifestyleCount:{}, boostUntil:0, blackoutUntil:0, savedAt:Date.now() };
+    HUSTLE_DEFS.forEach(h => s.hustles[h.id] = 0);
+    LIFESTYLE_DEFS.forEach(l => s.lifestyleCount[l.id] = 0);
+    return s;
+  }
+  let state = freshState();
+
+  /* ---------- Helpers ---------- */
+  function lifestyleCostFor(def, count){ return Math.floor(def.cost * Math.pow(def.costMul, count)); }
+  function totalFlex(){
+    return LIFESTYLE_DEFS.reduce((sum, l) => sum + state.lifestyleCount[l.id] * l.flex, 0);
+  }
+  function costFor(def, level){ return Math.floor(def.baseCost * Math.pow(def.costMul, level)); }
+  function incomeFor(def, level){ return def.baseIncome * level; }
+  function fmt(n){
+    if(n >= 1e12) return '₦' + (n/1e12).toFixed(2) + 'T';
+    if(n >= 1e9) return '₦' + (n/1e9).toFixed(2) + 'B';
+    if(n >= 1e6) return '₦' + (n/1e6).toFixed(2) + 'M';
+    if(n >= 1e3) return '₦' + (n/1e3).toFixed(1) + 'K';
+    return '₦' + Math.floor(n).toLocaleString();
+  }
+  function baseIncomeTotal(){
+    let total = 0;
+    HUSTLE_DEFS.forEach(def => { total += incomeFor(def, state.hustles[def.id]); });
+    return total * (1 + Math.min(totalFlex() * 0.002, 1.5));
+  }
+  function totalIncome(){
+    let total = baseIncomeTotal();
+    const now = Date.now();
+    if(now < state.boostUntil) total *= 2;
+    if(now < state.blackoutUntil) total *= 0.35;
+    return total;
+  }
+
+  /* ---------- DOM ---------- */
+  const cashVal = document.getElementById('cashVal');
+  const incomeVal = document.getElementById('incomeVal');
+  const dayNum = document.getElementById('dayNum');
+  const flexVal = document.getElementById('flexVal');
+  const hustleList = document.getElementById('hustleList');
+  const logBody = document.getElementById('logBody');
+  const tickerText = document.getElementById('tickerText');
+  const resetBtn = document.getElementById('resetBtn');
+  const lifestyleTabs = document.getElementById('lifestyleTabs');
+  const lifestyleList = document.getElementById('lifestyleList');
+
+  function addLog(text, type){
+    const el = document.createElement('div');
+    el.className = 'log-entry' + (type ? ' ' + type : '');
+    el.textContent = '· ' + text;
+    logBody.prepend(el);
+    while(logBody.children.length > 25) logBody.removeChild(logBody.lastChild);
+  }
+
+  function renderLifestyleTabs(){
+    lifestyleTabs.innerHTML = '';
+    LIFESTYLE_CATS.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn' + (cat === activeCat ? ' active' : '');
+      btn.textContent = cat;
+      btn.dataset.cat = cat;
+      lifestyleTabs.appendChild(btn);
+    });
+  }
+
+  function renderLifestyleList(){
+    lifestyleList.innerHTML = '';
+    LIFESTYLE_DEFS.filter(l => l.cat === activeCat).forEach(l => {
+      const count = state.lifestyleCount[l.id];
+      const cost = lifestyleCostFor(l, count);
+      const row = document.createElement('div');
+      row.className = 'litem' + (count > 0 ? ' owned' : '');
+      row.innerHTML = `
+        <div class="icon">${l.icon}</div>
+        <div class="info">
+          <div class="name">${l.name}${count > 0 ? `<span class="lvl">x${count}</span>` : ''}</div>
+          <div class="meta">+${l.flex} flex each${count > 0 ? ' · ' + (count * l.flex).toLocaleString() + ' total' : ''}</div>
+        </div>
+        <button class="buy-btn flex-btn" data-id="${l.id}" ${state.cash < cost ? 'disabled' : ''}>
+          ${count === 0 ? 'Buy' : 'Buy Again'}<br>${fmt(cost)}
+        </button>
+      `;
+      lifestyleList.appendChild(row);
+    });
+  }
+
+  function renderHustleList(){
+    hustleList.innerHTML = '';
+    HUSTLE_DEFS.forEach(def => {
+      const level = state.hustles[def.id];
+      const cost = costFor(def, level);
+      const unlocked = level > 0 || state.cash >= cost * 0.5 || def.baseCost <= 650;
+      const row = document.createElement('div');
+      row.className = 'hustle' + (unlocked ? '' : ' locked');
+      const income = incomeFor(def, level);
+      row.innerHTML = `
+        <div class="icon">${def.icon}</div>
+        <div class="info">
+          <div class="name">${def.name}${level > 0 ? `<span class="lvl">Lv ${level}</span>` : ''}</div>
+          <div class="meta">${level > 0 ? fmt(income) + '/s earned' : 'Not started'}</div>
+        </div>
+        <button class="buy-btn" data-id="${def.id}" ${state.cash < cost ? 'disabled' : ''}>
+          ${level === 0 ? 'Start' : 'Upgrade'}<br>${fmt(cost)}
+        </button>
+      `;
+      hustleList.appendChild(row);
+    });
+  }
+
+  // Rebuild lists only when something visible changed. Rebuilding every tick
+  // can swallow taps on touch screens.
+  let lastSig = '';
+  function listSignature(){
+    const h = HUSTLE_DEFS.map(d => {
+      const lv = state.hustles[d.id], c = costFor(d, lv);
+      return lv + ':' + (state.cash >= c ? 1 : 0) + ':' + ((lv > 0 || state.cash >= c * 0.5 || d.baseCost <= 650) ? 1 : 0);
+    }).join('|');
+    const l = LIFESTYLE_DEFS.map(d => {
+      const n = state.lifestyleCount[d.id];
+      return n + ':' + (state.cash >= lifestyleCostFor(d, n) ? 1 : 0);
+    }).join('|');
+    return activeCat + '#' + h + '#' + l;
+  }
+
+  function renderStats(){
+    cashVal.textContent = fmt(state.cash);
+    incomeVal.textContent = fmt(totalIncome()) + '/s';
+    dayNum.textContent = state.day;
+    flexVal.textContent = totalFlex().toLocaleString();
+  }
+
+  function render(force){
+    renderStats();
+    const sig = listSignature();
+    if(force || sig !== lastSig){
+      lastSig = sig;
+      renderHustleList();
+      renderLifestyleList();
+    }
+  }
+
+  /* ---------- Interaction ---------- */
+  lifestyleTabs.addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if(!btn) return;
+    activeCat = btn.dataset.cat;
+    haptic();
+    renderLifestyleTabs();
+    render(true);
+  });
+
+  lifestyleList.addEventListener('click', e => {
+    const btn = e.target.closest('.buy-btn');
+    if(!btn) return;
+    const def = LIFESTYLE_DEFS.find(l => l.id === btn.dataset.id);
+    const count = state.lifestyleCount[def.id];
+    const cost = lifestyleCostFor(def, count);
+    if(state.cash < cost){ haptic('error'); return; }
+    state.cash -= cost;
+    state.lifestyleCount[def.id] += 1;
+    haptic('success');
+    addLog(`You copped another ${def.name.toLowerCase()}. People dey notice.`, 'good');
+    render(true);
+    save();
+  });
+
+  hustleList.addEventListener('click', e => {
+    const btn = e.target.closest('.buy-btn');
+    if(!btn) return;
+    const def = HUSTLE_DEFS.find(h => h.id === btn.dataset.id);
+    const level = state.hustles[def.id];
+    const cost = costFor(def, level);
+    if(state.cash < cost){ haptic('error'); return; }
+    state.cash -= cost;
+    state.hustles[def.id] += 1;
+    haptic('success');
+    if(level === 0) addLog(`You just started your ${def.name.toLowerCase()} hustle.`, 'good');
+    else addLog(`${def.name} upgraded to level ${state.hustles[def.id]}.`);
+    render(true);
+    save();
+  });
+
+  function doReset(){
+    state = freshState();
+    storageClear();
+    logBody.innerHTML = '';
+    addLog('New hustle started with ₦50 in your pocket.', 'good');
+    render(true);
+    save();
+  }
+  resetBtn.addEventListener('click', () => {
+    if(tg && tg.showConfirm){
+      tg.showConfirm('Start Wire Empire over from scratch?', ok => { if(ok) doReset(); });
+    } else if(confirm('Start Wire Empire over from scratch?')){
+      doReset();
+    }
+  });
+
+  /* ---------- Save / load ---------- */
+  function save(){
+    state.savedAt = Date.now();
+    storageSet(JSON.stringify(state));
+  }
+
+  function loadSave(done){
+    storageGet(raw => {
+      if(raw){
+        try{
+          const s = JSON.parse(raw);
+          const base = freshState();
+          state = Object.assign(base, s);
+          // merge in case new hustles/items were added in an update
+          HUSTLE_DEFS.forEach(h => { if(typeof state.hustles[h.id] !== 'number') state.hustles[h.id] = 0; });
+          LIFESTYLE_DEFS.forEach(l => { if(typeof state.lifestyleCount[l.id] !== 'number') state.lifestyleCount[l.id] = 0; });
+          // offline earnings
+          const elapsed = Math.min((Date.now() - (s.savedAt || Date.now())) / 1000, OFFLINE_CAP_SECONDS);
+          const earned = baseIncomeTotal() * elapsed * OFFLINE_RATE;
+          if(earned > 0 && elapsed > 30){
+            state.cash += earned;
+            state.boostUntil = 0; state.blackoutUntil = 0;
+            addLog(`You were away ${Math.round(elapsed/60)} min. Shop dey run, you earned ${fmt(earned)}.`, 'good');
+          } else {
+            addLog('Welcome back to Wire Empire.', 'good');
+          }
+        }catch(e){
+          state = freshState();
+          addLog('Welcome to Wire Empire. Time to build something from nothing.', 'good');
+        }
+      } else {
+        addLog('Welcome to Wire Empire. Time to build something from nothing.', 'good');
+      }
+      done();
+    });
+  }
+
+  /* ---------- Ticker + loops ---------- */
+  function updateTicker(){
+    const lines = [
+      `DAY ${state.day}`,
+      `CASH: ${fmt(state.cash)}`,
+      `INCOME: ${fmt(totalIncome())}/S`,
+      GIST[Math.floor(Math.random()*GIST.length)].toUpperCase(),
+    ];
+    const full = lines.join('   ///   ');
+    tickerText.textContent = full + '   ///   ' + full;
+  }
+
+  function triggerEvent(){
+    const ev = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+    addLog(ev.text, ev.type);
+    const now = Date.now();
+    if(ev.effect === 'blackout') state.blackoutUntil = now + 8000;
+    if(ev.effect === 'boost') state.boostUntil = now + 6000;
+    if(ev.effect === 'checkpoint') state.cash = Math.max(0, state.cash - state.cash * 0.08);
+    if(ev.effect === 'wave') state.cash += Math.max(10, totalIncome() * 15);
+    if(ev.effect === 'fuel') state.blackoutUntil = now + 5000;
+    render();
+  }
+
+  function startLoops(){
+    let lastTick = Date.now();
+    setInterval(() => {
+      const now = Date.now();
+      const dt = (now - lastTick) / 1000;
+      lastTick = now;
+      state.cash += totalIncome() * dt;
+      render();
+    }, 500);
+
+    setInterval(updateTicker, 4000);
+    setInterval(() => { state.day += 1; }, 60000);
+    setInterval(triggerEvent, 25000);
+    setInterval(save, 10000);
+
+    document.addEventListener('visibilitychange', () => { if(document.hidden) save(); });
+    window.addEventListener('pagehide', save);
+    if(tg && tg.onEvent) tg.onEvent('viewportChanged', () => {});
+  }
+
+  /* ---------- Boot ---------- */
+  renderLifestyleTabs();
+  loadSave(() => {
+    updateTicker();
+    render(true);
+    startLoops();
+  });
+})();
+</script>
+</body>
+</html>
