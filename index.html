@@ -490,15 +490,17 @@
 
   /* ---------- Game data ---------- */
   const HUSTLE_DEFS = [
-    { id:'okada',   icon:'🏍️', name:'Okada Rider',    baseCost:20,     baseIncome:0.6,  costMul:1.14 },
-    { id:'suya',    icon:'🍢', name:'Suya Spot',      baseCost:120,    baseIncome:3.2,  costMul:1.15 },
-    { id:'pos',     icon:'📱', name:'POS Agent Stand', baseCost:650,    baseIncome:14,   costMul:1.16 },
-    { id:'danfo',   icon:'🚌', name:'Danfo Route',    baseCost:3200,   baseIncome:60,   costMul:1.17 },
-    { id:'ankara',  icon:'👗', name:'Ankara Boutique', baseCost:16000,  baseIncome:260,  costMul:1.18 },
-    { id:'content', icon:'🎥', name:'Content House',  baseCost:80000,  baseIncome:1100, costMul:1.19 },
-    { id:'crypto',  icon:'🪂', name:'Crypto Corner',  baseCost:400000, baseIncome:4800, costMul:1.20 },
-    { id:'estate',  icon:'🏢', name:'Estate Empire',  baseCost:2000000,baseIncome:21000,costMul:1.21 },
+    { id:'okada',   icon:'🏍️', name:'Okada Rider',     baseCost:20,      baseIncome:0.083,  costMul:1.15 },
+    { id:'suya',    icon:'🍢', name:'Suya Spot',       baseCost:120,     baseIncome:0.167,  costMul:1.16 },
+    { id:'pos',     icon:'📱', name:'POS Agent Stand', baseCost:650,     baseIncome:0.361,  costMul:1.17 },
+    { id:'danfo',   icon:'🚌', name:'Danfo Route',     baseCost:3200,    baseIncome:0.762,  costMul:1.18 },
+    { id:'ankara',  icon:'👗', name:'Ankara Boutique', baseCost:16000,   baseIncome:1.455,  costMul:1.19 },
+    { id:'content', icon:'🎥', name:'Content House',   baseCost:80000,   baseIncome:2.857,  costMul:1.20 },
+    { id:'crypto',  icon:'🪂', name:'Crypto Corner',   baseCost:400000,  baseIncome:5.714,  costMul:1.21 },
+    { id:'estate',  icon:'🏢', name:'Estate Empire',   baseCost:2000000, baseIncome:11.765, costMul:1.22 },
   ];
+  const SATURATION = 0.96;   // each extra level of the same hustle earns 4% less than the one before
+  const ECON_VERSION = 2;    // bump when the economy is rebalanced
 
   const EVENTS = [
     { text:'NEPA don take light — income slows for 8s', type:'bad', effect:'blackout' },
@@ -535,10 +537,18 @@
   ];
 
   const COINS = [
-    { id:'btc',   name:'Bitcoin',  sym:'BTC',   base:50000, vol:0.012, rug:false },
-    { id:'sol',   name:'Solana',   sym:'SOL',   base:4000,  vol:0.025, rug:false },
-    { id:'naija', name:'Naija Moon', sym:'NMOON', base:25,   vol:0.05,  rug:true  },
+    { id:'btc',   name:'Bitcoin',    sym:'BTC',   base:50000, vol:0.012, beta:1.0, rug:false },
+    { id:'sol',   name:'Solana',     sym:'SOL',   base:4000,  vol:0.025, beta:1.5, rug:false },
+    { id:'naija', name:'Naija Moon', sym:'NMOON', base:25,    vol:0.05,  beta:2.5, rug:true  },
   ];
+  const TRADE_FEE = 0.01;   // 1% on every buy and sell
+  // Market moods. Bull runs can be big, bear runs hurt, and the price has no ceiling.
+  const REGIME_DEFS = {
+    sideways:{ drift:0,       lo:30, hi:90,  next:[['bull',0.45],['bear',0.35],['sideways',0.2]] },
+    bull:    { drift:0.0012,  lo:45, hi:120, next:[['sideways',0.5],['bear',0.5]] },
+    bear:    { drift:-0.0016, lo:45, hi:100, next:[['sideways',0.5],['bull',0.5]] },
+  };
+  const MEGA_BULL_CHANCE = 0.06, MEGA_BULL_X = 5;
   const BETS = [
     { id:'safe',    name:'Safe single',   odds:1.5, p:0.58 },
     { id:'acca',    name:'4-fold acca',   odds:4,   p:0.22 },
@@ -550,14 +560,15 @@
   ];
   const MIN_STAKE = 10;
 
-  const OFFLINE_CAP_SECONDS = 2 * 3600;   // max 2 hours of offline earnings
-  const OFFLINE_RATE = 0.1;               // offline earns only 10% of normal rate
+  const OFFLINE_CAP_SECONDS = 20 * 60;    // offline earning stops after 20 minutes
+  const OFFLINE_RATE = 0.25;              // and pays only 25% of the normal rate
 
   function freshState(){
     const s = { cash:50, day:1, hustles:{}, lifestyleCount:{}, boostUntil:0, blackoutUntil:0, savedAt:Date.now(),
                 betPct:0.25, tradePct:0.25, betWins:0, betLosses:0,
                 stats:{ earned:0, upgrades:0, tradeWins:0, lifestyle:0 }, challenges:[], challengesDone:0,
-                crypto:{ prices:{}, holdings:{}, cost:{}, hist:{} } };
+                ver:ECON_VERSION, chalDay:'', chalClaims:0,
+                crypto:{ prices:{}, holdings:{}, cost:{}, hist:{}, regime:{ name:'sideways', left:60, mult:1 } } };
     HUSTLE_DEFS.forEach(h => s.hustles[h.id] = 0);
     LIFESTYLE_DEFS.forEach(l => s.lifestyleCount[l.id] = 0);
     COINS.forEach(c => {
@@ -574,7 +585,9 @@
     return LIFESTYLE_DEFS.reduce((sum, l) => sum + state.lifestyleCount[l.id] * l.flex, 0);
   }
   function costFor(def, level){ return Math.floor(def.baseCost * Math.pow(def.costMul, level)); }
-  function incomeFor(def, level){ return def.baseIncome * level; }
+  function incomeFor(def, level){
+    return level <= 0 ? 0 : def.baseIncome * (1 - Math.pow(SATURATION, level)) / (1 - SATURATION);
+  }
   function fmt(n){
     if(n >= 1e12) return '₦' + (n/1e12).toFixed(2) + 'T';
     if(n >= 1e9) return '₦' + (n/1e9).toFixed(2) + 'B';
@@ -582,10 +595,11 @@
     if(n >= 1e3) return '₦' + (n/1e3).toFixed(1) + 'K';
     return '₦' + Math.floor(n).toLocaleString();
   }
+  function fmtRate(n){ return n < 10 ? '₦' + n.toFixed(2) : fmt(n); }
   function baseIncomeTotal(){
     let total = 0;
     HUSTLE_DEFS.forEach(def => { total += incomeFor(def, state.hustles[def.id]); });
-    return total * (1 + Math.min(totalFlex() * 0.002, 1.5));
+    return total * (1 + Math.min(totalFlex() * 0.0002, 0.25));   // flex now adds at most +25%
   }
   function totalIncome(){
     let total = baseIncomeTotal();
@@ -660,7 +674,7 @@
         <div class="icon">${def.icon}</div>
         <div class="info">
           <div class="name">${def.name}${level > 0 ? `<span class="lvl">Lv ${level}</span>` : ''}</div>
-          <div class="meta">${level > 0 ? fmt(income) + '/s earned' : 'Not started'}</div>
+          <div class="meta">${level > 0 ? fmtRate(income) + '/s earned' : 'Not started'}</div>
         </div>
         <button class="buy-btn" data-id="${def.id}" ${state.cash < cost ? 'disabled' : ''}>
           ${level === 0 ? 'Start' : 'Upgrade'}<br>${fmt(cost)}
@@ -687,7 +701,7 @@
 
   function renderStats(){
     cashVal.textContent = fmt(state.cash);
-    incomeVal.textContent = fmt(totalIncome()) + '/s';
+    incomeVal.textContent = fmtRate(totalIncome()) + '/s';
     dayNum.textContent = state.day;
     flexVal.textContent = totalFlex().toLocaleString();
   }
@@ -708,58 +722,67 @@
   const challengeList = document.getElementById('challengeList');
   const chalCount = document.getElementById('chalCount');
   const MAX_CHALLENGES = 3;
+  const DAILY_CLAIM_LIMIT = 6;               // reward claims per real day
+  const SKIP_COOLDOWN_MS = 10 * 60 * 1000;   // a slot can't be skipped again for 10 minutes
+
+  function todayKey(){ const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  function claimsToday(){ return state.chalDay === todayKey() ? state.chalClaims : 0; }
+
+  // Small rewards with a hard cap, so they stop growing as you get richer.
+  function chalReward(k, floor, cap){
+    const raw = baseIncomeTotal() * 300 * k;
+    const bonus = 1 + Math.min(state.challengesDone, 20) * 0.05;
+    return Math.round(Math.min(cap, Math.max(floor, raw)) * bonus / 10) * 10;
+  }
 
   const CHALLENGE_TYPES = {
     earn: {
       icon:'💰',
       value:() => state.stats.earned,
       eligible:() => true,
-      make:() => { const t = Math.max(300, Math.round(baseIncomeTotal() * 240 / 100) * 100);
-                   return { target:t, reward:Math.round(t * 0.35) }; },
+      make:() => ({ target:Math.max(100, Math.round(baseIncomeTotal() * 600 / 100) * 100), reward:chalReward(0.3, 30, 400) }),
       text:t => `Earn ${fmt(t)} from your hustles`,
-      money:true
+      show:fmt
     },
     upgrade: {
       icon:'🛠️',
       value:() => state.stats.upgrades,
       eligible:() => true,
-      make:() => ({ target:3 + Math.floor(Math.random() * 3),
-                    reward:Math.max(150, Math.round(baseIncomeTotal() * 100)) }),
+      make:() => ({ target:3 + Math.floor(Math.random() * 3), reward:chalReward(0.5, 40, 300) }),
       text:t => `Start or upgrade hustles ${t} times`
     },
     income: {
       icon:'⚡',
       value:() => baseIncomeTotal(),
       eligible:() => true,
-      make:() => { const t = Math.max(2, Math.ceil(baseIncomeTotal() * 1.5));
-                   return { target:t, reward:Math.max(300, t * 120) }; },
-      text:t => `Reach ${fmt(t)} per second`,
-      money:true, absolute:true
+      make:() => ({ target:Math.max(0.25, Math.round(baseIncomeTotal() * 1.5 * 100) / 100), reward:chalReward(0.6, 50, 500) }),
+      text:t => `Reach ${fmtRate(t)} per second`,
+      show:fmtRate, absolute:true
     },
     betwin: {
       icon:'⚽',
       value:() => state.betWins,
       eligible:() => state.cash >= 50,
-      make:() => ({ target:2, reward:Math.max(250, Math.round(baseIncomeTotal() * 140)) }),
+      make:() => ({ target:2, reward:chalReward(0.8, 60, 600) }),
       text:t => `Win ${t} bets`
     },
     trade: {
       icon:'📈',
       value:() => state.stats.tradeWins,
       eligible:() => state.cash >= 100 || portfolioValue() > 0,
-      make:() => ({ target:2, reward:Math.max(250, Math.round(baseIncomeTotal() * 140)) }),
+      make:() => ({ target:2, reward:chalReward(1, 80, 800) }),
       text:t => `Sell crypto at a profit ${t} times`
     },
     lifestyle: {
       icon:'🛍️',
       value:() => state.stats.lifestyle,
-      eligible:() => baseIncomeTotal() >= 3,
-      make:() => ({ target:2, reward:Math.max(200, Math.round(baseIncomeTotal() * 80)) }),
+      eligible:() => baseIncomeTotal() >= 1,
+      make:() => ({ target:2, reward:chalReward(1.2, 100, 1000) }),
       text:t => `Buy ${t} lifestyle items`
     },
   };
 
-  function newChallenge(excludeTypes){
+  function newChallenge(excludeTypes, skipUntil){
     const all = Object.keys(CHALLENGE_TYPES);
     let pool = all.filter(k => !excludeTypes.includes(k) && CHALLENGE_TYPES[k].eligible());
     if(!pool.length) pool = all.filter(k => !excludeTypes.includes(k));
@@ -767,19 +790,18 @@
     const type = pool[Math.floor(Math.random() * pool.length)];
     const def = CHALLENGE_TYPES[type];
     const m = def.make();
-    return { type, target:m.target, reward:m.reward, base: def.absolute ? 0 : def.value() };
+    return { type, target:m.target, reward:m.reward, base: def.absolute ? 0 : def.value(), skipUntil: skipUntil || 0 };
   }
 
   function ensureChallenges(){
     state.challenges = (state.challenges || []).filter(c => CHALLENGE_TYPES[c.type]);
     while(state.challenges.length < MAX_CHALLENGES){
-      state.challenges.push(newChallenge(state.challenges.map(c => c.type)));
+      state.challenges.push(newChallenge(state.challenges.map(c => c.type), 0));
     }
   }
 
   function challengeProgress(c){
-    const def = CHALLENGE_TYPES[c.type];
-    return Math.max(0, def.value() - c.base);
+    return Math.max(0, CHALLENGE_TYPES[c.type].value() - c.base);
   }
 
   function buildChallenges(){
@@ -802,6 +824,8 @@
   }
 
   function updateChallenges(){
+    const limitHit = claimsToday() >= DAILY_CLAIM_LIMIT;
+    const now = Date.now();
     state.challenges.forEach((c, i) => {
       const def = CHALLENGE_TYPES[c.type];
       const prog = challengeProgress(c);
@@ -811,19 +835,26 @@
       const card = document.getElementById('chal-' + i);
       if(!fill || !meta || !card) return;
       fill.style.width = (pct * 100) + '%';
-      meta.textContent = def.money
-        ? `${fmt(Math.min(prog, c.target))} / ${fmt(c.target)}`
+      meta.textContent = def.show
+        ? `${def.show(Math.min(prog, c.target))} / ${def.show(c.target)}`
         : `${Math.min(Math.floor(prog), c.target)} / ${c.target}`;
       card.classList.toggle('done', pct >= 1);
-      const btn = card.querySelector('[data-act="claim"]');
-      if(btn) btn.disabled = pct < 1;
+      const claim = card.querySelector('[data-act="claim"]');
+      if(claim) claim.disabled = pct < 1 || limitHit;
+      const skip = card.querySelector('[data-act="skip"]');
+      if(skip){
+        const left = (c.skipUntil || 0) - now;
+        skip.disabled = left > 0;
+        skip.textContent = left > 0 ? 'Skip ' + Math.ceil(left / 60000) + 'm' : 'Skip';
+      }
     });
-    chalCount.textContent = `Challenges completed: ${state.challengesDone}`;
+    chalCount.textContent = `Claimed today: ${claimsToday()}/${DAILY_CLAIM_LIMIT} · Total done: ${state.challengesDone}` +
+      (limitHit ? ' · Come back tomorrow' : '');
   }
 
-  function replaceChallenge(i){
+  function replaceChallenge(i, skipped){
     const others = state.challenges.filter((_, j) => j !== i).map(c => c.type);
-    state.challenges[i] = newChallenge(others);
+    state.challenges[i] = newChallenge(others, skipped ? Date.now() + SKIP_COOLDOWN_MS : 0);
     buildChallenges();
     updateChallenges();
   }
@@ -836,17 +867,24 @@
     if(!c) return;
     if(btn.dataset.act === 'claim'){
       if(challengeProgress(c) < c.target) return;
+      if(state.chalDay !== todayKey()){ state.chalDay = todayKey(); state.chalClaims = 0; }
+      if(state.chalClaims >= DAILY_CLAIM_LIMIT){
+        haptic('error');
+        addLog('Daily challenge limit reached. Come back tomorrow.', 'bad');
+        return;
+      }
+      state.chalClaims += 1;
       state.cash += c.reward;
       state.challengesDone += 1;
       haptic('success');
       addLog(`Challenge done! You collected ${fmt(c.reward)}.`, 'good');
-      replaceChallenge(i);
+      replaceChallenge(i, false);
       render(true);
       save();
     } else {
       haptic();
       addLog('Challenge skipped. New one don land.');
-      replaceChallenge(i);
+      replaceChallenge(i, true);
       save();
     }
   });
@@ -902,7 +940,7 @@
   }
 
   function portfolioValue(){
-    return COINS.reduce((sum,c) => sum + state.crypto.holdings[c.id] * state.crypto.prices[c.id], 0);
+    return COINS.reduce((sum,c) => sum + state.crypto.holdings[c.id] * state.crypto.prices[c.id] * (1 - TRADE_FEE), 0);
   }
 
   function updateRisky(){
@@ -923,13 +961,13 @@
     });
 
     // crypto
-    cryptoStats.textContent = 'Portfolio ' + fmt(portfolioValue());
+    cryptoStats.textContent = 'Portfolio ' + fmt(portfolioValue()) + ' · 1% fee per trade';
     COINS.forEach(c => {
       const price = state.crypto.prices[c.id];
       const hist = state.crypto.hist[c.id];
       const chg = ((price - hist[0]) / hist[0]) * 100;
       const held = state.crypto.holdings[c.id];
-      const val = held * price;
+      const val = held * price * (1 - TRADE_FEE);
       const cost = state.crypto.cost[c.id];
       document.getElementById('cp-' + c.id).innerHTML =
         `${fmtPrice(price)} · <span class="${chg >= 0 ? 'up' : 'down'}">${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%</span>`;
@@ -983,14 +1021,14 @@
       const spend = Math.floor(state.cash * state.tradePct);
       if(spend < MIN_STAKE){ haptic('error'); return; }
       state.cash -= spend;
-      state.crypto.holdings[id] += spend / price;
+      state.crypto.holdings[id] += spend * (1 - TRADE_FEE) / price;
       state.crypto.cost[id] += spend;
       haptic('success');
       addLog(`You bought ${fmt(spend)} of ${c.sym}.`);
     } else {
       const held = state.crypto.holdings[id];
       if(held <= 0){ haptic('error'); return; }
-      const value = held * price;
+      const value = held * price * (1 - TRADE_FEE);
       const pl = value - state.crypto.cost[id];
       if(pl > 0) state.stats.tradeWins += 1;
       state.cash += value;
@@ -1003,11 +1041,41 @@
     save();
   }
 
+  const HEADLINES = {
+    bull: ['Crypto Twitter dey shout: market dey heat up.', 'Whales dey buy. Prices dey climb.', 'Everybody don turn crypto expert again.'],
+    bear: ['Market dey bleed. Red everywhere.', 'Big sell-off, people dey panic.', 'Exchange rumour dey scatter the market.'],
+  };
+
+  // Moves to the next market mood. The headline is right about 70% of the time, so you can never be sure.
+  function nextRegime(){
+    const r = state.crypto.regime;
+    const def = REGIME_DEFS[r.name];
+    let roll = Math.random();
+    let pick = def.next[def.next.length - 1][0];
+    for(const entry of def.next){
+      if(roll < entry[1]){ pick = entry[0]; break; }
+      roll -= entry[1];
+    }
+    const nd = REGIME_DEFS[pick];
+    r.name = pick;
+    r.left = nd.lo + Math.floor(Math.random() * (nd.hi - nd.lo + 1));
+    r.mult = (pick === 'bull' && Math.random() < MEGA_BULL_CHANCE) ? MEGA_BULL_X : 1;
+    if(pick !== 'sideways'){
+      let said = pick;
+      if(Math.random() < 0.3) said = pick === 'bull' ? 'bear' : 'bull';
+      const list = HEADLINES[said];
+      addLog(list[Math.floor(Math.random() * list.length)], 'event');
+    }
+  }
+
   function marketTick(){
+    const r = state.crypto.regime;
+    if(r.left <= 0) nextRegime();
+    r.left -= 1;
+    const drift = REGIME_DEFS[r.name].drift * (r.name === 'bull' ? r.mult : 1);
     COINS.forEach(c => {
       let p = state.crypto.prices[c.id];
-      p *= 1 + (Math.random() - 0.5) * 2 * c.vol;
-      p += (c.base - p) * 0.003;
+      p *= Math.max(0.05, 1 + (Math.random() - 0.5) * 2 * c.vol + drift * c.beta);
       if(c.rug && Math.random() < 0.012){
         p *= 0.4; haptic('error');
         addLog(`${c.sym} don rug pull! Price crash.`, 'bad');
@@ -1015,7 +1083,7 @@
         p *= 1.8;
         addLog(`${c.sym} dey moon. Influencers dey shout.`, 'good');
       }
-      p = Math.min(Math.max(p, c.base * 0.05), c.base * 20);
+      p = Math.min(Math.max(p, c.base * 0.02), c.base * 5000);
       state.crypto.prices[c.id] = p;
       const h = state.crypto.hist[c.id];
       h.push(p);
@@ -1105,7 +1173,7 @@
   /* ---------- Save / load ---------- */
   function save(){
     state.savedAt = Date.now();
-    storageSet(JSON.stringify(state, (k, v) => typeof v === 'number' ? Number(v.toPrecision(8)) : v));
+    storageSet(JSON.stringify(state, (k, v) => typeof v === 'number' ? (Math.abs(v) >= 1e11 ? v : Number(v.toPrecision(8))) : v));
   }
 
   function loadSave(done){
@@ -1129,13 +1197,20 @@
             if(typeof state.crypto.cost[c.id] !== 'number') state.crypto.cost[c.id] = 0;
             if(!Array.isArray(state.crypto.hist[c.id]) || !state.crypto.hist[c.id].length) state.crypto.hist[c.id] = [state.crypto.prices[c.id]];
           });
-          // offline earnings
-          const elapsed = Math.min((Date.now() - (s.savedAt || Date.now())) / 1000, OFFLINE_CAP_SECONDS);
-          const earned = baseIncomeTotal() * elapsed * OFFLINE_RATE;
+          if(!state.crypto.regime) state.crypto.regime = base.crypto.regime;
+          // saves from before the economy rebalance
+          const oldEconomy = (s.ver || 1) < ECON_VERSION;
+          if(oldEconomy){ state.challenges = []; state.chalDay = ''; state.chalClaims = 0; }
+          state.ver = ECON_VERSION;
+          if(oldEconomy) addLog('Economy don change: income and rewards reduced. Tap Start Over for the real-life grind.', 'event');
+          // offline earnings: only the first 20 minutes, at 25% pay
+          const away = (Date.now() - (s.savedAt || Date.now())) / 1000;
+          const elapsed = Math.min(away, OFFLINE_CAP_SECONDS);
+          const earned = oldEconomy ? 0 : baseIncomeTotal() * elapsed * OFFLINE_RATE;
           if(earned > 0 && elapsed > 30){
             state.cash += earned;
             state.boostUntil = 0; state.blackoutUntil = 0;
-            addLog(`You were away ${Math.round(elapsed/60)} min. Shop dey run, you earned ${fmt(earned)}.`, 'good');
+            addLog(`You were away ${Math.round(away/60)} min. Shop only ran for ${Math.round(elapsed/60)} min at 25% pay: ${fmt(earned)}.`, 'good');
           } else {
             addLog('Welcome back to Wire Empire.', 'good');
           }
@@ -1155,7 +1230,7 @@
     const lines = [
       `DAY ${state.day}`,
       `CASH: ${fmt(state.cash)}`,
-      `INCOME: ${fmt(totalIncome())}/S`,
+      `INCOME: ${fmtRate(totalIncome())}/S`,
       GIST[Math.floor(Math.random()*GIST.length)].toUpperCase(),
     ];
     const full = lines.join('   ///   ');
