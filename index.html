@@ -569,7 +569,7 @@
                 betPct:0.25, tradePct:0.25, betWins:0, betLosses:0,
                 stats:{ earned:0, upgrades:0, tradeWins:0, lifestyle:0 }, challenges:[], challengesDone:0,
                 ver:ECON_VERSION, chalDay:'', chalClaims:0,
-                crypto:{ prices:{}, holdings:{}, cost:{}, hist:{}, regime:{ name:'sideways', left:60, mult:1 } } };
+                crypto:{ prices:{}, holdings:{}, cost:{}, hist:{}, regime:{ name:'sideways', left:60, mult:1 }, tick:0, histV:2 } };
     HUSTLE_DEFS.forEach(h => s.hustles[h.id] = 0);
     LIFESTYLE_DEFS.forEach(l => s.lifestyleCount[l.id] = 0);
     COINS.forEach(c => {
@@ -944,6 +944,12 @@
     return COINS.reduce((sum,c) => sum + state.crypto.holdings[c.id] * state.crypto.prices[c.id] * (1 - TRADE_FEE), 0);
   }
 
+  function agoLabel(len){
+    const secs = (len - 1) * 20 + (((state.crypto.tick || 0) % 10) * 2);
+    if(secs < 5) return 'now';
+    return (secs < 90 ? secs + 's' : Math.round(secs / 60) + 'm') + ' ago';
+  }
+
   function updateRisky(){
     // chips
     betChips.querySelectorAll('.chip').forEach(ch =>
@@ -971,7 +977,7 @@
       const val = held * price * (1 - TRADE_FEE);
       const cost = state.crypto.cost[c.id];
       document.getElementById('cp-' + c.id).innerHTML =
-        `${fmtPrice(price)} · <span class="${chg >= 0 ? 'up' : 'down'}">${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%</span>`;
+        `${fmtPrice(price)} · <span class="${chg >= 0 ? 'up' : 'down'}">${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%</span> · ${agoLabel(hist.length)}: ${fmtPrice(hist[0])}`;
       let line = held > 0 ? 'Holding ' + fmt(val) : 'Not holding';
       if(held > 0 && cost > 0){
         const pl = val - cost;
@@ -979,7 +985,7 @@
       }
       document.getElementById('ch-' + c.id).innerHTML = line;
       const sp = document.getElementById('sp-' + c.id);
-      sp.setAttribute('points', sparkPoints(hist));
+      sp.setAttribute('points', sparkPoints(hist.concat([price])));
       sp.setAttribute('stroke', chg >= 0 ? '#14b862' : '#d0491c');
       coinList.querySelector(`button[data-act="buy"][data-id="${c.id}"]`).disabled = state.cash * state.tradePct < MIN_STAKE;
       coinList.querySelector(`button[data-act="sell"][data-id="${c.id}"]`).disabled = held <= 0;
@@ -1048,7 +1054,7 @@
   };
 
   // Moves to the next market mood. The headline is right about 70% of the time, so you can never be sure.
-  function nextRegime(){
+  function nextRegime(silent){
     const r = state.crypto.regime;
     const def = REGIME_DEFS[r.name];
     let roll = Math.random();
@@ -1061,7 +1067,7 @@
     r.name = pick;
     r.left = nd.lo + Math.floor(Math.random() * (nd.hi - nd.lo + 1));
     r.mult = (pick === 'bull' && Math.random() < MEGA_BULL_CHANCE) ? MEGA_BULL_X : 1;
-    if(pick !== 'sideways'){
+    if(pick !== 'sideways' && !silent){
       let said = pick;
       if(Math.random() < 0.3) said = pick === 'bull' ? 'bear' : 'bull';
       const list = HEADLINES[said];
@@ -1069,28 +1075,32 @@
     }
   }
 
-  function marketTick(){
+  function marketTick(silent){
     const r = state.crypto.regime;
-    if(r.left <= 0) nextRegime();
+    if(r.left <= 0) nextRegime(silent);
     r.left -= 1;
+    state.crypto.tick = (state.crypto.tick || 0) + 1;
+    const sample = state.crypto.tick % 10 === 0;   // one chart point every 20 seconds
     const drift = REGIME_DEFS[r.name].drift * (r.name === 'bull' ? r.mult : 1);
     COINS.forEach(c => {
       let p = state.crypto.prices[c.id];
       p *= Math.max(0.05, 1 + (Math.random() - 0.5) * 2 * c.vol + drift * c.beta);
       if(c.rug && Math.random() < 0.012){
-        p *= 0.4; haptic('error');
-        addLog(`${c.sym} don rug pull! Price crash.`, 'bad');
+        p *= 0.4;
+        if(!silent){ haptic('error'); addLog(`${c.sym} don rug pull! Price crash.`, 'bad'); }
       } else if(c.rug && Math.random() < 0.012){
         p *= 1.8;
-        addLog(`${c.sym} dey moon. Influencers dey shout.`, 'good');
+        if(!silent) addLog(`${c.sym} dey moon. Influencers dey shout.`, 'good');
       }
       p = Math.min(Math.max(p, c.base * 0.02), c.base * 5000);
       state.crypto.prices[c.id] = p;
-      const h = state.crypto.hist[c.id];
-      h.push(p);
-      while(h.length > 30) h.shift();
+      if(sample){
+        const h = state.crypto.hist[c.id];
+        h.push(p);
+        while(h.length > 30) h.shift();
+      }
     });
-    updateRisky();
+    if(!silent) updateRisky();
   }
 
   betChips.addEventListener('click', e => {
@@ -1199,6 +1209,11 @@
             if(!Array.isArray(state.crypto.hist[c.id]) || !state.crypto.hist[c.id].length) state.crypto.hist[c.id] = [state.crypto.prices[c.id]];
           });
           if(!state.crypto.regime) state.crypto.regime = base.crypto.regime;
+          if(state.crypto.histV !== 2){
+            COINS.forEach(c => { state.crypto.hist[c.id] = [state.crypto.prices[c.id]]; });
+            state.crypto.tick = 0;
+            state.crypto.histV = 2;
+          }
           // saves from before the economy rebalance
           const savedVer = s.ver || 1;
           const oldEconomy = savedVer < 2;
@@ -1217,6 +1232,19 @@
             addLog('Economy don change: income and rewards reduced. Tap Start Over for the real-life grind.', 'event');
           }
           state.ver = ECON_VERSION;
+          // the market keeps moving while you are away (up to 30 minutes of movement)
+          const awaySec = Math.min((Date.now() - (s.savedAt || Date.now())) / 1000, 1800);
+          const awayTicks = Math.floor(awaySec / 2);
+          if(!oldEconomy && awayTicks >= 15){
+            const before = {};
+            COINS.forEach(c => { before[c.id] = state.crypto.prices[c.id]; });
+            for(let i = 0; i < awayTicks; i++) marketTick(true);
+            const parts = COINS.map(c => {
+              const ch = (state.crypto.prices[c.id] / before[c.id] - 1) * 100;
+              return c.sym + ' ' + (ch >= 0 ? '+' : '') + ch.toFixed(0) + '%';
+            });
+            addLog('Market moved while you were away: ' + parts.join(' · '), 'event');
+          }
           // offline earnings: only the first 20 minutes, at 25% pay
           const away = (Date.now() - (s.savedAt || Date.now())) / 1000;
           const elapsed = Math.min(away, OFFLINE_CAP_SECONDS);
@@ -1279,7 +1307,7 @@
     setInterval(() => { state.day += 1; }, 60000);
     setInterval(triggerEvent, 25000);
     setInterval(save, 10000);
-    setInterval(marketTick, 2000);
+    setInterval(() => marketTick(false), 2000);
 
     document.addEventListener('visibilitychange', () => { if(document.hidden) save(); });
     window.addEventListener('pagehide', save);
