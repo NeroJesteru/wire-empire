@@ -490,17 +490,18 @@
 
   /* ---------- Game data ---------- */
   const HUSTLE_DEFS = [
-    { id:'okada',   icon:'🏍️', name:'Okada Rider',     baseCost:20,      baseIncome:0.083,  costMul:1.15 },
-    { id:'suya',    icon:'🍢', name:'Suya Spot',       baseCost:120,     baseIncome:0.167,  costMul:1.16 },
-    { id:'pos',     icon:'📱', name:'POS Agent Stand', baseCost:650,     baseIncome:0.361,  costMul:1.17 },
-    { id:'danfo',   icon:'🚌', name:'Danfo Route',     baseCost:3200,    baseIncome:0.762,  costMul:1.18 },
-    { id:'ankara',  icon:'👗', name:'Ankara Boutique', baseCost:16000,   baseIncome:1.455,  costMul:1.19 },
-    { id:'content', icon:'🎥', name:'Content House',   baseCost:80000,   baseIncome:2.857,  costMul:1.20 },
-    { id:'crypto',  icon:'🪂', name:'Crypto Corner',   baseCost:400000,  baseIncome:5.714,  costMul:1.21 },
-    { id:'estate',  icon:'🏢', name:'Estate Empire',   baseCost:2000000, baseIncome:11.765, costMul:1.22 },
+    { id:'okada',   icon:'🏍️', name:'Okada Rider',     baseCost:60,      baseIncome:1,      costMul:1.15 },
+    { id:'suya',    icon:'🍢', name:'Suya Spot',       baseCost:360,     baseIncome:2,      costMul:1.16 },
+    { id:'pos',     icon:'📱', name:'POS Agent Stand', baseCost:2100,     baseIncome:4.33,   costMul:1.17 },
+    { id:'danfo',   icon:'🚌', name:'Danfo Route',     baseCost:11000,    baseIncome:9.14,   costMul:1.18 },
+    { id:'ankara',  icon:'👗', name:'Ankara Boutique', baseCost:52000,   baseIncome:17.46,  costMul:1.19 },
+    { id:'content', icon:'🎥', name:'Content House',   baseCost:310000,   baseIncome:34.3,   costMul:1.20 },
+    { id:'crypto',  icon:'🪂', name:'Crypto Corner',   baseCost:1900000,  baseIncome:68.6,   costMul:1.21 },
+    { id:'estate',  icon:'🏢', name:'Estate Empire',   baseCost:12000000, baseIncome:141.2,  costMul:1.22 },
   ];
   const SATURATION = 0.96;   // each extra level of the same hustle earns 4% less than the one before
-  const ECON_VERSION = 2;    // bump when the economy is rebalanced
+  const ECON_VERSION = 4;    // bump when the economy is rebalanced
+  const MONEY_SCALE = 12;    // v3 made every amount 12x bigger (same pacing, bigger numbers)
 
   const EVENTS = [
     { text:'NEPA don take light — income slows for 8s', type:'bad', effect:'blackout' },
@@ -511,18 +512,18 @@
   ];
 
   const LIFESTYLE_DEFS = [
-    { id:'okrika',   cat:'Clothes', icon:'👕', name:'Okrika Fit',         cost:500,      flex:2,    costMul:1.10 },
-    { id:'native',   cat:'Clothes', icon:'🧵', name:'Ankara Native Wear', cost:5000,     flex:8,    costMul:1.11 },
-    { id:'kicks',    cat:'Clothes', icon:'👟', name:'Designer Kicks',     cost:45000,    flex:30,   costMul:1.12 },
-    { id:'agbada',   cat:'Clothes', icon:'🥻', name:'Full Agbada Set',    cost:300000,   flex:120,  costMul:1.13 },
-    { id:'infinix',  cat:'Phones',  icon:'📱', name:'Infinix Hot',        cost:60000,    flex:20,   costMul:1.12 },
-    { id:'itel',     cat:'Phones',  icon:'📲', name:'Techno Camon',       cost:150000,   flex:45,   costMul:1.13 },
-    { id:'iphone',   cat:'Phones',  icon:'📱', name:'Latest iPhone',      cost:1200000,  flex:250,  costMul:1.14 },
-    { id:'foldable', cat:'Phones',  icon:'🪭', name:'Foldable Flagship',  cost:3500000,  flex:600,  costMul:1.15 },
-    { id:'guest',    cat:'Hotels',  icon:'🏨', name:'Local Guest House',  cost:8000,     flex:10,   costMul:1.08 },
-    { id:'weekend',  cat:'Hotels',  icon:'🏩', name:'Weekend at Eko Hotel',cost:150000,  flex:60,   costMul:1.10 },
-    { id:'suite',    cat:'Hotels',  icon:'🛎️', name:'Presidential Suite', cost:900000,   flex:220,  costMul:1.11 },
-    { id:'villa',    cat:'Hotels',  icon:'🏝️', name:'Private Island Villa',cost:10000000,flex:1500, costMul:1.12 },
+    { id:'okrika',   cat:'Clothes', icon:'👕', name:'Okrika Fit',         cost:6000,      flex:2,    costMul:1.10 },
+    { id:'native',   cat:'Clothes', icon:'🧵', name:'Ankara Native Wear', cost:60000,     flex:8,    costMul:1.11 },
+    { id:'kicks',    cat:'Clothes', icon:'👟', name:'Designer Kicks',     cost:540000,    flex:30,   costMul:1.12 },
+    { id:'agbada',   cat:'Clothes', icon:'🥻', name:'Full Agbada Set',    cost:3600000,   flex:120,  costMul:1.13 },
+    { id:'infinix',  cat:'Phones',  icon:'📱', name:'Infinix Hot',        cost:720000,    flex:20,   costMul:1.12 },
+    { id:'itel',     cat:'Phones',  icon:'📲', name:'Techno Camon',       cost:1800000,   flex:45,   costMul:1.13 },
+    { id:'iphone',   cat:'Phones',  icon:'📱', name:'Latest iPhone',      cost:14400000,  flex:250,  costMul:1.14 },
+    { id:'foldable', cat:'Phones',  icon:'🪭', name:'Foldable Flagship',  cost:42000000,  flex:600,  costMul:1.15 },
+    { id:'guest',    cat:'Hotels',  icon:'🏨', name:'Local Guest House',  cost:96000,     flex:10,   costMul:1.08 },
+    { id:'weekend',  cat:'Hotels',  icon:'🏩', name:'Weekend at Eko Hotel',cost:1800000,  flex:60,   costMul:1.10 },
+    { id:'suite',    cat:'Hotels',  icon:'🛎️', name:'Presidential Suite', cost:10800000,   flex:220,  costMul:1.11 },
+    { id:'villa',    cat:'Hotels',  icon:'🏝️', name:'Private Island Villa',cost:120000000,flex:1500, costMul:1.12 },
   ];
   const LIFESTYLE_CATS = ['Clothes', 'Phones', 'Hotels'];
   let activeCat = 'Clothes';
@@ -558,13 +559,13 @@
     { pct:0.10, label:'10%' }, { pct:0.25, label:'25%' },
     { pct:0.50, label:'50%' }, { pct:1,    label:'All-in' },
   ];
-  const MIN_STAKE = 10;
+  const MIN_STAKE = 100;
 
   const OFFLINE_CAP_SECONDS = 20 * 60;    // offline earning stops after 20 minutes
   const OFFLINE_RATE = 0.25;              // and pays only 25% of the normal rate
 
   function freshState(){
-    const s = { cash:50, day:1, hustles:{}, lifestyleCount:{}, boostUntil:0, blackoutUntil:0, savedAt:Date.now(),
+    const s = { cash:50 * MONEY_SCALE, day:1, hustles:{}, lifestyleCount:{}, boostUntil:0, blackoutUntil:0, savedAt:Date.now(),
                 betPct:0.25, tradePct:0.25, betWins:0, betLosses:0,
                 stats:{ earned:0, upgrades:0, tradeWins:0, lifestyle:0 }, challenges:[], challengesDone:0,
                 ver:ECON_VERSION, chalDay:'', chalClaims:0,
@@ -666,7 +667,7 @@
     HUSTLE_DEFS.forEach(def => {
       const level = state.hustles[def.id];
       const cost = costFor(def, level);
-      const unlocked = level > 0 || state.cash >= cost * 0.5 || def.baseCost <= 650;
+      const unlocked = level > 0 || state.cash >= cost * 0.5 || def.baseCost <= 7800;
       const row = document.createElement('div');
       row.className = 'hustle' + (unlocked ? '' : ' locked');
       const income = incomeFor(def, level);
@@ -690,7 +691,7 @@
   function listSignature(){
     const h = HUSTLE_DEFS.map(d => {
       const lv = state.hustles[d.id], c = costFor(d, lv);
-      return lv + ':' + (state.cash >= c ? 1 : 0) + ':' + ((lv > 0 || state.cash >= c * 0.5 || d.baseCost <= 650) ? 1 : 0);
+      return lv + ':' + (state.cash >= c ? 1 : 0) + ':' + ((lv > 0 || state.cash >= c * 0.5 || d.baseCost <= 7800) ? 1 : 0);
     }).join('|');
     const l = LIFESTYLE_DEFS.map(d => {
       const n = state.lifestyleCount[d.id];
@@ -740,7 +741,7 @@
       icon:'💰',
       value:() => state.stats.earned,
       eligible:() => true,
-      make:() => ({ target:Math.max(100, Math.round(baseIncomeTotal() * 600 / 100) * 100), reward:chalReward(0.3, 30, 400) }),
+      make:() => ({ target:Math.max(1200, Math.round(baseIncomeTotal() * 600 / 100) * 100), reward:chalReward(0.3, 360, 4800) }),
       text:t => `Earn ${fmt(t)} from your hustles`,
       show:fmt
     },
@@ -748,36 +749,36 @@
       icon:'🛠️',
       value:() => state.stats.upgrades,
       eligible:() => true,
-      make:() => ({ target:3 + Math.floor(Math.random() * 3), reward:chalReward(0.5, 40, 300) }),
+      make:() => ({ target:3 + Math.floor(Math.random() * 3), reward:chalReward(0.5, 480, 3600) }),
       text:t => `Start or upgrade hustles ${t} times`
     },
     income: {
       icon:'⚡',
       value:() => baseIncomeTotal(),
       eligible:() => true,
-      make:() => ({ target:Math.max(0.25, Math.round(baseIncomeTotal() * 1.5 * 100) / 100), reward:chalReward(0.6, 50, 500) }),
+      make:() => ({ target:Math.max(3, Math.round(baseIncomeTotal() * 1.5 * 10) / 10), reward:chalReward(0.6, 600, 6000) }),
       text:t => `Reach ${fmtRate(t)} per second`,
       show:fmtRate, absolute:true
     },
     betwin: {
       icon:'⚽',
       value:() => state.betWins,
-      eligible:() => state.cash >= 50,
-      make:() => ({ target:2, reward:chalReward(0.8, 60, 600) }),
+      eligible:() => state.cash >= 600,
+      make:() => ({ target:2, reward:chalReward(0.8, 720, 7200) }),
       text:t => `Win ${t} bets`
     },
     trade: {
       icon:'📈',
       value:() => state.stats.tradeWins,
-      eligible:() => state.cash >= 100 || portfolioValue() > 0,
-      make:() => ({ target:2, reward:chalReward(1, 80, 800) }),
+      eligible:() => state.cash >= 1200 || portfolioValue() > 0,
+      make:() => ({ target:2, reward:chalReward(1, 960, 9600) }),
       text:t => `Sell crypto at a profit ${t} times`
     },
     lifestyle: {
       icon:'🛍️',
       value:() => state.stats.lifestyle,
-      eligible:() => baseIncomeTotal() >= 1,
-      make:() => ({ target:2, reward:chalReward(1.2, 100, 1000) }),
+      eligible:() => baseIncomeTotal() >= 12,
+      make:() => ({ target:2, reward:chalReward(1.2, 1200, 12000) }),
       text:t => `Buy ${t} lifestyle items`
     },
   };
@@ -1158,7 +1159,7 @@
     logBody.innerHTML = '';
     ensureChallenges();
     buildChallenges();
-    addLog('New hustle started with ₦50 in your pocket.', 'good');
+    addLog('New hustle started with ₦600 in your pocket.', 'good');
     render(true);
     save();
   }
@@ -1199,10 +1200,23 @@
           });
           if(!state.crypto.regime) state.crypto.regime = base.crypto.regime;
           // saves from before the economy rebalance
-          const oldEconomy = (s.ver || 1) < ECON_VERSION;
-          if(oldEconomy){ state.challenges = []; state.chalDay = ''; state.chalClaims = 0; }
+          const savedVer = s.ver || 1;
+          const oldEconomy = savedVer < 2;
+          if(savedVer === 2){
+            // v2 -> v3: every amount became 12x bigger, so scale the player's money to match
+            state.cash *= MONEY_SCALE;
+            state.stats.earned *= MONEY_SCALE;
+            COINS.forEach(c => {
+              state.crypto.cost[c.id] *= MONEY_SCALE;
+              state.crypto.holdings[c.id] *= MONEY_SCALE;
+            });
+            state.challenges = [];
+            addLog('Economy updated: bigger numbers now (first hustle pays ₦1/s). Your money was scaled to match.', 'event');
+          } else if(oldEconomy){
+            state.challenges = []; state.chalDay = ''; state.chalClaims = 0;
+            addLog('Economy don change: income and rewards reduced. Tap Start Over for the real-life grind.', 'event');
+          }
           state.ver = ECON_VERSION;
-          if(oldEconomy) addLog('Economy don change: income and rewards reduced. Tap Start Over for the real-life grind.', 'event');
           // offline earnings: only the first 20 minutes, at 25% pay
           const away = (Date.now() - (s.savedAt || Date.now())) / 1000;
           const elapsed = Math.min(away, OFFLINE_CAP_SECONDS);
@@ -1244,7 +1258,7 @@
     if(ev.effect === 'blackout') state.blackoutUntil = now + 8000;
     if(ev.effect === 'boost') state.boostUntil = now + 6000;
     if(ev.effect === 'checkpoint') state.cash = Math.max(0, state.cash - state.cash * 0.08);
-    if(ev.effect === 'wave') state.cash += Math.max(10, totalIncome() * 15);
+    if(ev.effect === 'wave') state.cash += Math.max(120, totalIncome() * 15);
     if(ev.effect === 'fuel') state.blackoutUntil = now + 5000;
     render();
   }
