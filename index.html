@@ -540,7 +540,7 @@
   const COINS = [
     { id:'btc',   name:'Bitcoin',    sym:'BTC',   base:50000, vol:0.012, beta:1.0, rug:false },
     { id:'sol',   name:'Solana',     sym:'SOL',   base:4000,  vol:0.025, beta:1.5, rug:false },
-    { id:'naija', name:'Naija Moon', sym:'NMOON', base:25,    vol:0.05,  beta:2.5, rug:true  },
+    { id:'naija', name:'Naija Moon', sym:'NMOON', base:25,    vol:0.05,  beta:2.5, rug:true, pull:0.002 },
   ];
   const TRADE_FEE = 0.01;   // 1% on every buy and sell
   // Market moods. Bull runs can be big, bear runs hurt, and the price has no ceiling.
@@ -1085,12 +1085,15 @@
     COINS.forEach(c => {
       let p = state.crypto.prices[c.id];
       p *= Math.max(0.05, 1 + (Math.random() - 0.5) * 2 * c.vol + drift * c.beta);
-      if(c.rug && Math.random() < 0.012){
-        p *= 0.4;
-        if(!silent){ haptic('error'); addLog(`${c.sym} don rug pull! Price crash.`, 'bad'); }
-      } else if(c.rug && Math.random() < 0.012){
-        p *= 1.8;
-        if(!silent) addLog(`${c.sym} dey moon. Influencers dey shout.`, 'good');
+      // meme coins slowly drift back toward their normal range, so a crash can recover
+      if(c.pull) p *= Math.exp(-c.pull * Math.log(p / c.base));
+      // rug pulls and moons are equal in size and chance: halve or double
+      if(c.rug && Math.random() < 0.004){
+        p *= 0.5;
+        if(!silent){ haptic('error'); addLog(`${c.sym} don rug pull! Price drop 50%.`, 'bad'); }
+      } else if(c.rug && Math.random() < 0.004){
+        p *= 2;
+        if(!silent) addLog(`${c.sym} dey moon. Price don double.`, 'good');
       }
       p = Math.min(Math.max(p, c.base * 0.02), c.base * 5000);
       state.crypto.prices[c.id] = p;
